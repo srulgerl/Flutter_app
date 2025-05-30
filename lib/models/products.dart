@@ -39,6 +39,36 @@ class ProductModel {
   Map<String, dynamic> toJson() {
     throw UnimplementedError();
   }
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'title': title,
+    'price': price,
+    'count': count,
+    'image': image,
+    'description': description,
+    'category': category,
+    'rating': rating != null
+        ? {'rate': rating?.rate, 'count': rating?.count}
+        : null,
+  };
+
+  factory ProductModel.fromMap(Map<String, dynamic> map) => ProductModel(
+    id: map['id'] is int
+        ? map['id']
+        : int.tryParse(map['id']?.toString() ?? ''),
+    title: map['title'] ?? 'No title',
+    price: (map['price'] is num)
+        ? (map['price'] as num).toDouble()
+        : double.tryParse(map['price']?.toString() ?? '') ?? 0.0,
+    count: map['count'] ?? 1,
+    image: map['image'] ?? '',
+    description: map['description'] ?? '',
+    category: map['category'] ?? '',
+    rating: map['rating'] is Map<String, dynamic>
+        ? Rating.fromJson(map['rating'])
+        : null,
+  );
 }
 
 @JsonSerializable(createToJson: false)

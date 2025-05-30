@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors_in_immutables
+// ignore_for_file: prefer_const_constructors_in_immutables, library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:ecommerce/providers/product_provider.dart';
 import 'package:ecommerce/widgets/CategoryPanel.dart';
@@ -6,37 +6,38 @@ import 'package:ecommerce/widgets/FeaturedItems.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class Homescreen extends StatelessWidget {
+class Homescreen extends StatefulWidget {
   Homescreen({super.key});
+
+  @override
+  _HomescreenState createState() => _HomescreenState();
+}
+
+class _HomescreenState extends State<Homescreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      Provider.of<ProductProvider>(context, listen: false).loadProducts();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ProductProvider>(
       builder: (context, provider, child) {
         final products = provider.products;
-        List<String>? categories = [];
-        if (products.isNotEmpty) {
-          categories = products
-              .map((e) => e.category)
-              .toSet()
-              .take(3)
-              .cast<String>()
-              .toList();
-        }
+        List<String>? categories = provider.categories;
+
         return Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'Zeymur Store',
-              style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
-            ),
-          ),
+          appBar: AppBar(title: const Text('Zeymur Store'), centerTitle: true),
           body: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔍 Search field
+                  // Search field
                   TextField(
                     decoration: InputDecoration(
                       hintText: 'Enter Search Term',
@@ -57,16 +58,15 @@ class Homescreen extends StatelessWidget {
 
                   SizedBox(
                     height: 150,
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Categorypanel(),
-                        Categorypanel(),
-                        Categorypanel(),
-                      ],
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        return Categorypanel(category: categories[index]);
+                      },
                     ),
                   ),
+
                   const SizedBox(height: 16),
 
                   if (products.isEmpty)
@@ -75,7 +75,12 @@ class Homescreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: categories
-                          .map((cat) => Featureditems(category: cat))
+                          .map(
+                            (cat) => Featureditems(
+                              categoryTitle: cat,
+                              products: provider.getProductsByCategory(cat),
+                            ),
+                          )
                           .toList(),
                     ),
                 ],
